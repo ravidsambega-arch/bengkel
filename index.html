@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Mart Indonesia</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold: #f5c842;
+  --bg: #0d0d0f;
+  --surface: #16161a;
+  --surface2: #1e1e24;
+  --border: rgba(255,255,255,0.07);
+  --text: #f0ede8;
+  --muted: #888;
+  --radius: 16px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+/* NAVBAR */
+nav {
+  position:sticky; top:0; z-index:200;
+  display:flex; align-items:center; gap:24px;
+  padding:0 48px; height:68px;
+  background:rgba(13,13,15,0.92); backdrop-filter:blur(18px);
+  border-bottom:1px solid var(--border);
+}
+.nav-logo { font-family:'Playfair Display',serif; font-size:22px; font-weight:900; color:var(--gold); white-space:nowrap; }
+.nav-links { display:flex; gap:24px; list-style:none; margin-right:auto; }
+.nav-links a { color:var(--muted); text-decoration:none; font-size:14px; font-weight:500; transition:color 0.2s; }
+.nav-links a:hover { color:var(--text); }
+.nav-search { display:flex; align-items:center; gap:10px; background:var(--surface2); border:1px solid var(--border); border-radius:40px; padding:8px 18px; }
+.nav-search input { background:none; border:none; outline:none; color:var(--text); font-family:'DM Sans',sans-serif; font-size:14px; width:180px; }
+.nav-search input::placeholder { color:var(--muted); }
+.btn-cart-nav {
+  display:flex; align-items:center; gap:8px; padding:9px 20px;
+  background:var(--surface2); border:1px solid var(--border); border-radius:40px;
+  color:var(--text); font-family:'DM Sans',sans-serif; font-size:14px; font-weight:500;
+  cursor:pointer; transition:border-color 0.2s, background 0.2s; white-space:nowrap;
+}
+.btn-cart-nav:hover { border-color:var(--gold); background:rgba(245,200,66,0.06); }
+.cart-badge { background:var(--gold); color:#0d0d0f; border-radius:20px; padding:1px 8px; font-size:12px; font-weight:700; min-width:20px; text-align:center; }
+
+
+/* CART PANEL */
+.cart-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:300; backdrop-filter:blur(4px); }
+.cart-overlay.open { display:block; }
+.cart-panel { position:fixed; top:0; right:-420px; width:400px; height:100vh; background:var(--surface); border-left:1px solid var(--border); z-index:400; display:flex; flex-direction:column; transition:right 0.35s cubic-bezier(0.4,0,0.2,1); }
+.cart-panel.open { right:0; }
+.cart-head { display:flex; align-items:center; justify-content:space-between; padding:24px; border-bottom:1px solid var(--border); }
+.cart-head h3 { font-family:'Playfair Display',serif; font-size:20px; font-weight:700; }
+.btn-close-cart { width:36px; height:36px; background:var(--surface2); border:1px solid var(--border); border-radius:50%; cursor:pointer; font-size:16px; color:var(--muted); display:flex; align-items:center; justify-content:center; transition:color 0.2s; }
+.btn-close-cart:hover { color:var(--text); }
+.cart-body { flex:1; overflow-y:auto; padding:16px 24px; }
+.cart-empty { text-align:center; padding:60px 20px; color:var(--muted); }
+.cart-empty div { font-size:40px; margin-bottom:12px; }
+.cart-item { display:flex; align-items:center; gap:14px; padding:14px 0; border-bottom:1px solid var(--border); }
+.cart-item-img { width:60px; height:60px; border-radius:10px; background:var(--surface2); object-fit:contain; padding:6px; flex-shrink:0; }
+.cart-item-info { flex:1; }
+.cart-item-brand { font-size:11px; color:var(--gold); font-weight:500; letter-spacing:0.8px; text-transform:uppercase; }
+.cart-item-name { font-size:14px; font-weight:500; margin:2px 0 4px; }
+.cart-item-price { font-size:13px; color:var(--muted); }
+.cart-item-qty { display:flex; align-items:center; gap:8px; }
+.qty-btn { width:28px; height:28px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; cursor:pointer; font-size:16px; color:var(--text); display:flex; align-items:center; justify-content:center; transition:border-color 0.2s; }
+.qty-btn:hover { border-color:var(--gold); }
+.qty-num { font-size:14px; font-weight:500; min-width:20px; text-align:center; }
+.btn-hapus { background:none; border:none; color:#ef4444; cursor:pointer; font-size:18px; padding:4px; }
+.cart-foot { padding:20px 24px; border-top:1px solid var(--border); }
+.cart-total-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+.cart-total-label { font-size:14px; color:var(--muted); }
+.cart-total-val { font-family:'Playfair Display',serif; font-size:22px; font-weight:700; color:var(--gold); }
+.btn-checkout { width:100%; padding:14px; background:var(--gold); color:#0d0d0f; border:none; border-radius:12px; font-family:'DM Sans',sans-serif; font-size:15px; font-weight:500; cursor:pointer; transition:opacity 0.2s; }
+.btn-checkout:hover { opacity:0.88; }
+
+/* TOAST */
+.toast { position:fixed; bottom:32px; left:50%; transform:translateX(-50%) translateY(80px); background:var(--surface); border:1px solid rgba(245,200,66,0.3); border-radius:40px; padding:12px 24px; font-size:14px; font-weight:500; color:var(--text); z-index:500; transition:transform 0.3s, opacity 0.3s; opacity:0; white-space:nowrap; }
+.toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
+
+/* HERO */
+.hero { position:relative; overflow:hidden; padding:96px 48px 80px; display:flex; align-items:center; min-height:480px; }
+.hero::before { content:''; position:absolute; inset:0; pointer-events:none; background: radial-gradient(ellipse 60% 80% at 80% 50%, rgba(245,200,66,0.08) 0%, transparent 70%), radial-gradient(ellipse 40% 60% at 10% 20%, rgba(37,99,235,0.10) 0%, transparent 60%); }
+.hero-ring { position:absolute; right:-80px; top:50%; transform:translateY(-50%); width:520px; height:520px; border-radius:50%; border:1px solid rgba(245,200,66,0.12); pointer-events:none; }
+.hero-ring::before { content:''; position:absolute; inset:40px; border-radius:50%; border:1px solid rgba(245,200,66,0.08); }
+.hero-content { position:relative; max-width:560px; animation:fadeUp 0.7s ease both; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+.hero-eyebrow { display:inline-flex; align-items:center; gap:8px; font-size:12px; font-weight:500; letter-spacing:1.5px; text-transform:uppercase; color:var(--gold); margin-bottom:20px; }
+.hero-eyebrow span { display:inline-block; width:24px; height:1px; background:var(--gold); }
+.hero h1 { font-family:'Playfair Display',serif; font-size:clamp(36px,5vw,58px); font-weight:900; line-height:1.1; letter-spacing:-1px; margin-bottom:16px; }
+.hero h1 em { font-style:normal; color:var(--gold); }
+.hero p { font-size:16px; color:var(--muted); line-height:1.7; margin-bottom:36px; max-width:420px; }
+.hero-actions { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+.btn-primary { padding:14px 32px; background:var(--gold); color:#0d0d0f; border:none; border-radius:40px; font-family:'DM Sans',sans-serif; font-size:15px; font-weight:500; cursor:pointer; transition:opacity 0.2s, transform 0.15s; text-decoration:none; display:inline-block; }
+.btn-primary:hover { opacity:0.88; transform:translateY(-2px); }
+.btn-ghost { padding:14px 28px; background:transparent; color:var(--text); border:1px solid var(--border); border-radius:40px; font-family:'DM Sans',sans-serif; font-size:15px; cursor:pointer; transition:border-color 0.2s; text-decoration:none; display:inline-block; }
+.btn-ghost:hover { border-color:rgba(255,255,255,0.25); }
+.hero-stats { display:flex; gap:40px; margin-top:52px; padding-top:36px; border-top:1px solid var(--border); }
+.stat-num { font-family:'Playfair Display',serif; font-size:28px; font-weight:700; }
+.stat-label { font-size:12px; color:var(--muted); margin-top:2px; }
+
+/* SECTION */
+.section { padding:72px 48px; }
+.section-header { display:flex; align-items:baseline; gap:16px; margin-bottom:36px; }
+.section-title { font-family:'Playfair Display',serif; font-size:30px; font-weight:700; }
+.section-line { flex:1; height:1px; background:var(--border); }
+.kategori-grid { display:flex; gap:12px; flex-wrap:wrap; }
+.kategori-chip { padding:10px 24px; border:1px solid var(--border); border-radius:40px; background:var(--surface); color:var(--muted); font-size:14px; font-weight:500; cursor:pointer; transition:all 0.2s; text-decoration:none; display:inline-block; }
+.kategori-chip:hover, .kategori-chip.active { background:var(--gold); color:#0d0d0f; border-color:var(--gold); }
+
+/* PRODUK */
+.produk-section { padding:0 48px 80px; }
+.produk-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:20px; }
+
+/* CARD */
+.card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; position:relative; transition:transform 0.25s, border-color 0.25s, box-shadow 0.25s; animation:fadeUp 0.5s ease both; }
+.card:nth-child(1){animation-delay:0.05s} .card:nth-child(2){animation-delay:0.10s} .card:nth-child(3){animation-delay:0.15s}
+.card:nth-child(4){animation-delay:0.20s} .card:nth-child(5){animation-delay:0.25s} .card:nth-child(6){animation-delay:0.30s}
+.card:hover { transform:translateY(-6px); border-color:rgba(245,200,66,0.3); box-shadow:0 20px 40px rgba(0,0,0,0.4); }
+.card-img-wrap { position:relative; background:var(--surface2); height:200px; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+.card-img-wrap::after { content:''; position:absolute; bottom:0; left:0; right:0; height:50px; background:linear-gradient(to bottom, transparent, var(--surface)); }
+.card-img-wrap img { width:100%; height:100%; object-fit:contain; padding:16px; background:var(--surface2); transition:transform 0.4s; }
+.card:hover .card-img-wrap img { transform:scale(1.05); }
+.badge { position:absolute; top:12px; left:12px; z-index:2; padding:4px 12px; border-radius:20px; font-size:11px; font-weight:500; }
+.badge-diskon { background:#ef4444; color:white; }
+.badge-baru { background:var(--gold); color:#0d0d0f; }
+.card-body { padding:16px 18px 20px; }
+.card-brand { font-size:11px; font-weight:500; letter-spacing:1px; text-transform:uppercase; color:var(--gold); margin-bottom:4px; }
+.card-name { font-size:15px; font-weight:500; margin-bottom:10px; line-height:1.4; }
+.card-price { font-family:'Playfair Display',serif; font-size:20px; font-weight:700; margin-bottom:14px; }
+.card-price small { font-family:'DM Sans',sans-serif; font-size:11px; font-weight:400; color:var(--muted); }
+.card-actions { display:flex; gap:8px; }
+.btn-beli { flex:1; padding:10px; background:var(--gold); color:#0d0d0f; border:none; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; cursor:pointer; transition:opacity 0.2s, transform 0.15s; }
+.btn-beli:hover { opacity:0.88; transform:translateY(-1px); }
+.btn-beli:active { transform:scale(0.96); }
+.btn-wish { width:40px; height:40px; background:var(--surface2); border:1px solid var(--border); border-radius:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:18px; transition:all 0.2s; color:var(--muted); }
+.btn-wish:hover { border-color:#ef4444; color:#ef4444; }
+.btn-wish.aktif { border-color:#ef4444; background:rgba(239,68,68,0.1); color:#ef4444; }
+
+
+/* PROMO BANNER */
+.promo-banner { margin:0 48px 72px; background:var(--surface); border:1px solid rgba(245,200,66,0.2); border-radius:20px; padding:48px; display:flex; align-items:center; justify-content:space-between; gap:32px; position:relative; overflow:hidden; }
+.promo-banner::before { content:''; position:absolute; right:-40px; top:-40px; width:280px; height:280px; border-radius:50%; background:radial-gradient(circle, rgba(245,200,66,0.10) 0%, transparent 70%); pointer-events:none; }
+.promo-tag { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--gold); font-weight:500; margin-bottom:8px; }
+.promo-title { font-family:'Playfair Display',serif; font-size:32px; font-weight:700; margin-bottom:8px; }
+.promo-sub { color:var(--muted); font-size:15px; }
+
+/* PROMO SECTION */
+.promo-section { padding:72px 48px; }
+.promo-cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:20px; }
+.promo-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:28px; position:relative; overflow:hidden; transition:transform 0.25s, border-color 0.25s, box-shadow 0.25s; animation:fadeUp 0.5s ease both; }
+.promo-card:hover { transform:translateY(-6px); border-color:rgba(245,200,66,0.3); box-shadow:0 20px 40px rgba(0,0,0,0.4); }
+.promo-card::before { content:''; position:absolute; top:-30px; right:-30px; width:120px; height:120px; border-radius:50%; pointer-events:none; }
+.promo-card.gold::before { background:radial-gradient(circle, rgba(245,200,66,0.15) 0%, transparent 70%); }
+.promo-card.blue::before { background:radial-gradient(circle, rgba(37,99,235,0.15) 0%, transparent 70%); }
+.promo-card.red::before { background:radial-gradient(circle, rgba(239,68,68,0.15) 0%, transparent 70%); }
+.promo-card.green::before { background:radial-gradient(circle, rgba(34,197,94,0.15) 0%, transparent 70%); }
+.promo-icon { font-size:36px; margin-bottom:16px; }
+.promo-discount { display:inline-block; padding:4px 14px; border-radius:20px; font-size:12px; font-weight:700; letter-spacing:0.5px; margin-bottom:12px; }
+.promo-discount.gold-badge { background:rgba(245,200,66,0.15); color:var(--gold); border:1px solid rgba(245,200,66,0.3); }
+.promo-discount.blue-badge { background:rgba(37,99,235,0.15); color:#60a5fa; border:1px solid rgba(37,99,235,0.3); }
+.promo-discount.red-badge { background:rgba(239,68,68,0.15); color:#f87171; border:1px solid rgba(239,68,68,0.3); }
+.promo-discount.green-badge { background:rgba(34,197,94,0.15); color:#4ade80; border:1px solid rgba(34,197,94,0.3); }
+.promo-card-title { font-family:'Playfair Display',serif; font-size:20px; font-weight:700; margin-bottom:8px; }
+.promo-card-desc { font-size:13px; color:var(--muted); line-height:1.6; margin-bottom:20px; }
+.promo-card-code { background:var(--surface2); border:1px dashed rgba(255,255,255,0.15); border-radius:8px; padding:10px 14px; font-size:13px; display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+.promo-code-val { font-weight:700; letter-spacing:1px; font-family:monospace; font-size:15px; }
+.btn-copy { background:none; border:none; cursor:pointer; font-size:11px; color:var(--gold); font-weight:600; letter-spacing:0.5px; }
+.promo-expired { font-size:11px; color:var(--muted); }
+.promo-expired span { color:var(--text); }
+
+/* KONTAK SECTION */
+.kontak-section { padding:72px 48px; }
+.kontak-grid { display:grid; grid-template-columns:1fr 1fr; gap:48px; align-items:start; }
+@media(max-width:800px){ .kontak-grid { grid-template-columns:1fr; } }
+.kontak-info { display:flex; flex-direction:column; gap:20px; }
+.kontak-item { display:flex; gap:16px; align-items:flex-start; }
+.kontak-icon { width:44px; height:44px; border-radius:12px; background:var(--surface2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; margin-top:2px; }
+.kontak-item-label { font-size:11px; letter-spacing:1px; text-transform:uppercase; color:var(--gold); font-weight:500; margin-bottom:4px; }
+.kontak-item-val { font-size:14px; font-weight:500; margin-bottom:2px; }
+.kontak-item-sub { font-size:12px; color:var(--muted); }
+.kontak-sosmed { display:flex; gap:12px; margin-top:8px; }
+.btn-sosmed { width:40px; height:40px; border-radius:10px; background:var(--surface2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:18px; cursor:pointer; transition:all 0.2s; text-decoration:none; }
+.btn-sosmed:hover { border-color:var(--gold); background:rgba(245,200,66,0.08); }
+.kontak-form { background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:32px; }
+.kontak-form h3 { font-family:'Playfair Display',serif; font-size:22px; font-weight:700; margin-bottom:6px; }
+.kontak-form p { font-size:13px; color:var(--muted); margin-bottom:24px; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+@media(max-width:600px){ .form-row { grid-template-columns:1fr; } }
+.form-group { display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
+.form-group label { font-size:12px; font-weight:500; color:var(--muted); letter-spacing:0.5px; }
+.form-group input, .form-group textarea, .form-group select { background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:11px 14px; color:var(--text); font-family:'DM Sans',sans-serif; font-size:14px; outline:none; transition:border-color 0.2s; resize:vertical; }
+.form-group input::placeholder, .form-group textarea::placeholder { color:var(--muted); }
+.form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color:rgba(245,200,66,0.4); }
+.form-group select option { background:var(--surface2); }
+.btn-kirim { width:100%; padding:13px; background:var(--gold); color:#0d0d0f; border:none; border-radius:12px; font-family:'DM Sans',sans-serif; font-size:15px; font-weight:500; cursor:pointer; transition:opacity 0.2s, transform 0.15s; margin-top:4px; }
+.btn-kirim:hover { opacity:0.88; transform:translateY(-2px); }
+
+/* FOOTER */
+footer { border-top:1px solid var(--border); padding:40px 48px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px; }
+.footer-logo { font-family:'Playfair Display',serif; font-size:18px; font-weight:900; color:var(--gold); }
+.footer-links { display:flex; gap:24px; list-style:none; }
+.footer-links a { font-size:13px; color:var(--muted); text-decoration:none; transition:color 0.2s; }
+.footer-links a:hover { color:var(--text); }
+.footer-copy { font-size:12px; color:var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- OVERLAY -->
+<div class="cart-overlay" id="cartOverlay" onclick="tutupCart()"></div>
+
+<!-- PANEL KERANJANG -->
+<div class="cart-panel" id="cartPanel">
+  <div class="cart-head">
+    <h3>🛒 Keranjang Belanja</h3>
+    <button class="btn-close-cart" onclick="tutupCart()">✕</button>
+  </div>
+  <div class="cart-body" id="cartBody">
+    <div class="cart-empty"><div>🛍️</div><p>Keranjang kamu masih kosong</p></div>
+  </div>
+  <div class="cart-foot" id="cartFoot" style="display:none">
+    <div class="cart-total-row">
+      <span class="cart-total-label">Total Belanja</span>
+      <span class="cart-total-val" id="cartTotal">Rp 0</span>
+    </div>
+    <button class="btn-checkout" onclick="checkout()">Checkout Sekarang →</button>
+  </div>
+</div>
+
+<!-- NAVBAR -->
+<nav>
+  <div class="nav-logo">Digital Mart</div>
+  <ul class="nav-links">
+    <li><a href="#">Beranda</a></li>
+    <li><a href="#produk">Produk</a></li>
+    <li><a href="#promo">Promo</a></li>
+    <li><a href="#kontak">Kontak</a></li>
+  </ul>
+  <div class="nav-search">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+    <input type="text" placeholder="Cari smartphone..." oninput="cariProduk(this.value)">
+  </div>
+  <button class="btn-cart-nav" onclick="bukaCart()">
+    🛒 Keranjang
+    <span class="cart-badge" id="cartCount">0</span>
+  </button>
+
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-ring"></div>
+  <div class="hero-content">
+    <div class="hero-eyebrow"><span></span>Toko Smartphone Terpercaya</div>
+    <h1>Belanja HP<br>Lebih <em>Mudah</em> &amp;<br>Lebih Hemat</h1>
+    <p>Temukan berbagai merek smartphone pilihan dengan harga terbaik, garansi resmi, dan pengiriman cepat ke seluruh Indonesia.</p>
+    <div class="hero-actions">
+      <a href="#produk" class="btn-primary">Belanja Sekarang</a>
+      <a href="#promo" class="btn-ghost">Lihat Promo</a>
+    </div>
+    <div class="hero-stats">
+      <div><div class="stat-num">500+</div><div class="stat-label">Produk tersedia</div></div>
+      <div><div class="stat-num">50K+</div><div class="stat-label">Pembeli puas</div></div>
+      <div><div class="stat-num">100%</div><div class="stat-label">Garansi resmi</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- KATEGORI -->
+<section class="section">
+  <div class="section-header">
+    <h2 class="section-title">Kategori Merek</h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="kategori-grid">
+    <a href="#" class="kategori-chip active" onclick="filterMerk(event,'Semua')">Semua</a>
+    <a href="#" class="kategori-chip" onclick="filterMerk(event,'Samsung')">Samsung</a>
+    <a href="#" class="kategori-chip" onclick="filterMerk(event,'Apple')">Apple</a>
+    <a href="#" class="kategori-chip" onclick="filterMerk(event,'Xiaomi')">Xiaomi</a>
+    <a href="#" class="kategori-chip" onclick="filterMerk(event,'Oppo')">Oppo</a>
+    <a href="#" class="kategori-chip" onclick="filterMerk(event,'Vivo')">Vivo</a>
+    <a href="#" class="kategori-chip" onclick="filterMerk(event,'Realme')">Realme</a>
+  </div>
+</section>
+
+<!-- PRODUK -->
+<section class="produk-section" id="produk">
+  <div class="section-header">
+    <h2 class="section-title">Produk Terlaris</h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="produk-grid" id="produkGrid">
+
+    <div class="card" data-merk="Samsung">
+      <div class="card-img-wrap">
+        <span class="badge badge-diskon">Diskon 15%</span>
+        <img src="samsung.jpg" alt="Samsung Galaxy S23">
+      </div>
+      <div class="card-body">
+        <div class="card-brand">Samsung</div>
+        <div class="card-name">Galaxy S23</div>
+        <div class="card-price"><small>Rp </small>12.000.000</div>
+        <div class="card-actions">
+          <button class="btn-beli" onclick="tambahKeranjang('Samsung','Galaxy S23',12000000,'https://fdn2.gsmarena.com/vv/pics/samsung/samsung-galaxy-s23-5g-1.jpg')">+ Keranjang</button>
+          <button class="btn-wish" onclick="toggleWish(this)">♡</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-merk="Apple">
+      <div class="card-img-wrap">
+        <span class="badge badge-baru">Baru</span>
+        <img src="iphone.jpg" alt="iPhone 14">
+      </div>
+      <div class="card-body">
+        <div class="card-brand">Apple</div>
+        <div class="card-name">iPhone 14</div>
+        <div class="card-price"><small>Rp </small>15.000.000</div>
+        <div class="card-actions">
+          <button class="btn-beli" onclick="tambahKeranjang('Apple','iPhone 14',15000000,'https://fdn2.gsmarena.com/vv/pics/apple/apple-iphone-14-1.jpg')">+ Keranjang</button>
+          <button class="btn-wish" onclick="toggleWish(this)">♡</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-merk="Xiaomi">
+      <div class="card-img-wrap">
+        <img src="redmi.jpg" alt="Xiaomi Redmi Note 12">
+      </div>
+      <div class="card-body">
+        <div class="card-brand">Xiaomi</div>
+        <div class="card-name">Redmi Note 12</div>
+        <div class="card-price"><small>Rp </small>3.500.000</div>
+        <div class="card-actions">
+          <button class="btn-beli" onclick="tambahKeranjang('Xiaomi','Redmi Note 12',3500000,'https://fdn2.gsmarena.com/vv/pics/xiaomi/xiaomi-redmi-note-12-1.jpg')">+ Keranjang</button>
+          <button class="btn-wish" onclick="toggleWish(this)">♡</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-merk="Oppo">
+      <div class="card-img-wrap">
+        <span class="badge badge-diskon">Flash Sale</span>
+        <img src="oppo.jpg" alt="Oppo Reno 8">
+      </div>
+      <div class="card-body">
+        <div class="card-brand">Oppo</div>
+        <div class="card-name">Reno 8</div>
+        <div class="card-price"><small>Rp </small>5.000.000</div>
+        <div class="card-actions">
+          <button class="btn-beli" onclick="tambahKeranjang('Oppo','Reno 8',5000000,'https://fdn2.gsmarena.com/vv/pics/oppo/oppo-reno8-1.jpg')">+ Keranjang</button>
+          <button class="btn-wish" onclick="toggleWish(this)">♡</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-merk="Vivo">
+      <div class="card-img-wrap">
+        <img src="vivo.jpg" alt="Vivo V27">
+      </div>
+      <div class="card-body">
+        <div class="card-brand">Vivo</div>
+        <div class="card-name">V27</div>
+        <div class="card-price"><small>Rp </small>4.500.000</div>
+        <div class="card-actions">
+          <button class="btn-beli" onclick="tambahKeranjang('Vivo','V27',4500000,'https://fdn2.gsmarena.com/vv/pics/vivo/vivo-v27-1.jpg')">+ Keranjang</button>
+          <button class="btn-wish" onclick="toggleWish(this)">♡</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-merk="Realme">
+      <div class="card-img-wrap">
+        <span class="badge badge-baru">Baru</span>
+        <img src="realme.jpg" alt="Realme 11 Pro">
+      </div>
+      <div class="card-body">
+        <div class="card-brand">Realme</div>
+        <div class="card-name">11 Pro</div>
+        <div class="card-price"><small>Rp </small>4.000.000</div>
+        <div class="card-actions">
+          <button class="btn-beli" onclick="tambahKeranjang('Realme','11 Pro',4000000,'https://fdn2.gsmarena.com/vv/pics/realme/realme-11-pro-1.jpg')">+ Keranjang</button>
+          <button class="btn-wish" onclick="toggleWish(this)">♡</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- PROMO SECTION -->
+<section class="promo-section" id="promo">
+  <div class="section-header">
+    <h2 class="section-title">Promo &amp; Penawaran</h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="promo-cards">
+
+    <div class="promo-card gold">
+      <div class="promo-icon">🚀</div>
+      <span class="promo-discount gold-badge">HEMAT 15%</span>
+      <div class="promo-card-title">Flash Sale Weekend</div>
+      <div class="promo-card-desc">Diskon 15% untuk semua produk Samsung & Apple. Berlaku setiap Sabtu–Minggu sepanjang bulan ini.</div>
+      <div class="promo-card-code">
+        <span class="promo-code-val">WEEKEND15</span>
+        <button class="btn-copy" onclick="copyKode('WEEKEND15')">SALIN</button>
+      </div>
+      <div class="promo-expired">Berlaku hingga: <span>31 Mei 2026</span></div>
+    </div>
+
+    <div class="promo-card blue">
+      <div class="promo-icon">🚚</div>
+      <span class="promo-discount blue-badge">GRATIS ONGKIR</span>
+      <div class="promo-card-title">Gratis Ongkir Nasional</div>
+      <div class="promo-card-desc">Nikmati gratis ongkos kirim ke seluruh Indonesia untuk setiap pembelian minimal Rp 2.000.000.</div>
+      <div class="promo-card-code">
+        <span class="promo-code-val">ONGKIRGRATIS</span>
+        <button class="btn-copy" onclick="copyKode('ONGKIRGRATIS')">SALIN</button>
+      </div>
+      <div class="promo-expired">Berlaku hingga: <span>30 Juni 2026</span></div>
+    </div>
+
+    <div class="promo-card red">
+      <div class="promo-icon">🎁</div>
+      <span class="promo-discount red-badge">BONUS AKSESORI</span>
+      <div class="promo-card-title">Beli HP Dapat Bonus</div>
+      <div class="promo-card-desc">Beli smartphone Xiaomi, Oppo, atau Vivo minimum Rp 3.000.000, gratis case + tempered glass.</div>
+      <div class="promo-card-code">
+        <span class="promo-code-val">BONUSaksesori</span>
+        <button class="btn-copy" onclick="copyKode('BONUSAKSESORI')">SALIN</button>
+      </div>
+      <div class="promo-expired">Berlaku hingga: <span>15 Mei 2026</span></div>
+    </div>
+
+    <div class="promo-card green">
+      <div class="promo-icon">💳</div>
+      <span class="promo-discount green-badge">CICILAN 0%</span>
+      <div class="promo-card-title">Cicilan 0% 12 Bulan</div>
+      <div class="promo-card-desc">Bayar nanti tanpa bunga dengan kartu kredit BCA, Mandiri, dan BNI. Minimum transaksi Rp 5.000.000.</div>
+      <div class="promo-card-code">
+        <span class="promo-code-val">CICILAN0</span>
+        <button class="btn-copy" onclick="copyKode('CICILAN0')">SALIN</button>
+      </div>
+      <div class="promo-expired">Berlaku hingga: <span>31 Desember 2026</span></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- KONTAK SECTION -->
+<section class="kontak-section" id="kontak">
+  <div class="section-header">
+    <h2 class="section-title">Hubungi Kami</h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="kontak-grid">
+    <div class="kontak-info">
+      <div class="kontak-item">
+        <div class="kontak-icon">📍</div>
+        <div>
+          <div class="kontak-item-label">Alamat Toko</div>
+          <div class="kontak-item-val">Jl. Raden Intan No. 88, Bandar Lampung</div>
+          <div class="kontak-item-sub">Lampung, Indonesia 35117</div>
+        </div>
+      </div>
+      <div class="kontak-item">
+        <div class="kontak-icon">📞</div>
+        <div>
+          <div class="kontak-item-label">Telepon / WhatsApp</div>
+          <div class="kontak-item-val">+62 812-3456-7890</div>
+          <div class="kontak-item-sub">Senin–Sabtu, 09.00–21.00 WIB</div>
+        </div>
+      </div>
+      <div class="kontak-item">
+        <div class="kontak-icon">✉️</div>
+        <div>
+          <div class="kontak-item-label">Email</div>
+          <div class="kontak-item-val">halo@digitalmartid.com</div>
+          <div class="kontak-item-sub">Respon dalam 1×24 jam kerja</div>
+        </div>
+      </div>
+      <div class="kontak-item">
+        <div class="kontak-icon">🕐</div>
+        <div>
+          <div class="kontak-item-label">Jam Operasional</div>
+          <div class="kontak-item-val">Senin – Sabtu: 09.00 – 21.00</div>
+          <div class="kontak-item-sub">Minggu: 10.00 – 18.00 WIB</div>
+        </div>
+      </div>
+      <div>
+        <div class="kontak-item-label" style="margin-bottom:12px;">Ikuti Kami</div>
+        <div class="kontak-sosmed">
+          <a class="btn-sosmed" href="#" title="Instagram">📸</a>
+          <a class="btn-sosmed" href="#" title="TikTok">🎵</a>
+          <a class="btn-sosmed" href="#" title="WhatsApp" onclick="showToast('Membuka WhatsApp...')">💬</a>
+          <a class="btn-sosmed" href="#" title="YouTube">▶️</a>
+          <a class="btn-sosmed" href="#" title="Facebook">👤</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="kontak-form">
+      <h3>Kirim Pesan</h3>
+      <p>Ada pertanyaan atau butuh rekomendasi produk? Kami siap membantu kamu.</p>
+      <div class="form-row">
+        <div class="form-group">
+          <label>NAMA LENGKAP</label>
+          <input type="text" id="kNama" placeholder="Nama kamu...">
+        </div>
+        <div class="form-group">
+          <label>NOMOR HP</label>
+          <input type="tel" id="kHp" placeholder="08xx-xxxx-xxxx">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>EMAIL</label>
+        <input type="email" id="kEmail" placeholder="email@kamu.com">
+      </div>
+      <div class="form-group">
+        <label>TOPIK</label>
+        <select id="kTopik">
+          <option value="">-- Pilih topik --</option>
+          <option>Tanya Produk</option>
+          <option>Harga &amp; Promo</option>
+          <option>Status Pesanan</option>
+          <option>Garansi &amp; Servis</option>
+          <option>Lainnya</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>PESAN</label>
+        <textarea id="kPesan" rows="4" placeholder="Tulis pesanmu di sini..."></textarea>
+      </div>
+      <button class="btn-kirim" onclick="kirimPesan()">Kirim Pesan →</button>
+    </div>
+  </div>
+</section>
+
+<!-- PROMO BANNER -->
+<div class="promo-banner">
+  <div>
+    <div class="promo-tag">Penawaran Spesial</div>
+    <div class="promo-title">Gratis Ongkir<br>Seluruh Indonesia</div>
+    <div class="promo-sub">Berlaku untuk pembelian min. Rp 2.000.000</div>
+  </div>
+  <button class="btn-primary" onclick="showToast('Promo berhasil diklaim! 🎉')">Klaim Sekarang</button>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Digital Mart</div>
+  <ul class="footer-links">
+    <li><a href="#">Tentang Kami</a></li>
+    <li><a href="#">Kebijakan Privasi</a></li>
+    <li><a href="#">Syarat &amp; Ketentuan</a></li>
+    <li><a href="#">Kontak</a></li>
+  </ul>
+  <div class="footer-copy">© 2026 Digital Mart Indonesia</div>
+</footer>
+
+<script>
+var cart = [];
+
+function formatRp(n) {
+  return 'Rp ' + n.toLocaleString('id-ID');
+}
+
+var toastTimer;
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 2500);
+}
+
+function bukaCart() {
+  document.getElementById('cartPanel').classList.add('open');
+  document.getElementById('cartOverlay').classList.add('open');
+  renderCart();
+}
+
+function tutupCart() {
+  document.getElementById('cartPanel').classList.remove('open');
+  document.getElementById('cartOverlay').classList.remove('open');
+}
+
+function tambahKeranjang(brand, nama, harga, img) {
+  var idx = -1;
+  for (var i = 0; i < cart.length; i++) {
+    if (cart[i].nama === nama) { idx = i; break; }
+  }
+  if (idx >= 0) {
+    cart[idx].qty++;
+  } else {
+    cart.push({ brand: brand, nama: nama, harga: harga, img: img, qty: 1 });
+  }
+  updateBadge();
+  showToast('✓ ' + nama + ' ditambahkan ke keranjang');
+}
+
+function updateBadge() {
+  var total = 0;
+  for (var i = 0; i < cart.length; i++) total += cart[i].qty;
+  document.getElementById('cartCount').textContent = total;
+}
+
+function ubahQty(nama, delta) {
+  for (var i = 0; i < cart.length; i++) {
+    if (cart[i].nama === nama) {
+      cart[i].qty += delta;
+      if (cart[i].qty <= 0) cart.splice(i, 1);
+      break;
+    }
+  }
+  updateBadge();
+  renderCart();
+}
+
+function hapusItem(nama) {
+  cart = cart.filter(function(i){ return i.nama !== nama; });
+  updateBadge();
+  renderCart();
+}
+
+function renderCart() {
+  var body = document.getElementById('cartBody');
+  var foot = document.getElementById('cartFoot');
+  if (cart.length === 0) {
+    body.innerHTML = '<div class="cart-empty"><div>🛍️</div><p>Keranjang kamu masih kosong</p></div>';
+    foot.style.display = 'none';
+    return;
+  }
+  var html = '';
+  var total = 0;
+  for (var i = 0; i < cart.length; i++) {
+    var item = cart[i];
+    total += item.harga * item.qty;
+    html += '<div class="cart-item">'
+      + '<img class="cart-item-img" src="' + item.img + '" alt="' + item.nama + '">'
+      + '<div class="cart-item-info">'
+      + '<div class="cart-item-brand">' + item.brand + '</div>'
+      + '<div class="cart-item-name">' + item.nama + '</div>'
+      + '<div class="cart-item-price">' + formatRp(item.harga) + '</div>'
+      + '</div>'
+      + '<div class="cart-item-qty">'
+      + '<button class="qty-btn" onclick="ubahQty(\'' + item.nama + '\',-1)">−</button>'
+      + '<span class="qty-num">' + item.qty + '</span>'
+      + '<button class="qty-btn" onclick="ubahQty(\'' + item.nama + '\',1)">+</button>'
+      + '</div>'
+      + '<button class="btn-hapus" onclick="hapusItem(\'' + item.nama + '\')">🗑</button>'
+      + '</div>';
+  }
+  body.innerHTML = html;
+  document.getElementById('cartTotal').textContent = formatRp(total);
+  foot.style.display = 'block';
+}
+
+function checkout() {
+  showToast('🎉 Pesanan berhasil! Terima kasih sudah belanja.');
+  cart = [];
+  updateBadge();
+  renderCart();
+  tutupCart();
+}
+
+function toggleWish(btn) {
+  var isAktif = btn.classList.toggle('aktif');
+  var nama = btn.closest('.card').querySelector('.card-name').textContent;
+  btn.textContent = isAktif ? '♥' : '♡';
+  showToast(isAktif ? '♥ ' + nama + ' ditambahkan ke wishlist' : '♡ ' + nama + ' dihapus dari wishlist');
+}
+
+function filterMerk(e, merk) {
+  e.preventDefault();
+  var chips = document.querySelectorAll('.kategori-chip');
+  for (var i = 0; i < chips.length; i++) chips[i].classList.remove('active');
+  e.target.classList.add('active');
+  var cards = document.querySelectorAll('.card');
+  for (var j = 0; j < cards.length; j++) {
+    var cocok = merk === 'Semua' || cards[j].getAttribute('data-merk') === merk;
+    cards[j].style.display = cocok ? 'block' : 'none';
+  }
+}
+
+function copyKode(kode) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(kode);
+  }
+  showToast('✓ Kode "' + kode + '" berhasil disalin!');
+}
+
+function kirimPesan() {
+  var nama = document.getElementById('kNama').value.trim();
+  var hp = document.getElementById('kHp').value.trim();
+  var email = document.getElementById('kEmail').value.trim();
+  var topik = document.getElementById('kTopik').value;
+  var pesan = document.getElementById('kPesan').value.trim();
+  if (!nama || !pesan) {
+    showToast('⚠️ Nama dan pesan wajib diisi!');
+    return;
+  }
+  showToast('✅ Pesan terkirim! Kami akan segera menghubungi kamu.');
+  document.getElementById('kNama').value = '';
+  document.getElementById('kHp').value = '';
+  document.getElementById('kEmail').value = '';
+  document.getElementById('kTopik').value = '';
+  document.getElementById('kPesan').value = '';
+}
+
+
+function cariProduk(keyword) {
+  var q = keyword.toLowerCase();
+  var cards = document.querySelectorAll('.card');
+  for (var i = 0; i < cards.length; i++) {
+    var nama = cards[i].querySelector('.card-name').textContent.toLowerCase();
+    var merk = cards[i].querySelector('.card-brand').textContent.toLowerCase();
+    cards[i].style.display = (nama.indexOf(q) >= 0 || merk.indexOf(q) >= 0) ? 'block' : 'none';
+  }
+}
+</script>
+</body>
+</html>
